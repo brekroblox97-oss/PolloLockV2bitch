@@ -497,4 +497,7 @@ minimize.MouseButton1Click:Connect(function()
     container.Visible = not minimized
     sidebar.Visible = not minimized
 end)
-close.MouseButton1C
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    fovScreenGui:Destroy()
+end)
