@@ -1,1 +1,500 @@
-# PolloLockV2bitch
+-- oh yeah bitch, that is the fucking PolloLockV2
+--Made by BlackPollo
+
+pcall(function()
+    game.Players.LocalPlayer.PlayerGui:FindFirstChild("PolloLockV2"):Destroy()
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PolloLockV2"
+gui.Parent = game.Players.LocalPlayer.PlayerGui
+gui.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame", gui)
+mainFrame.Size = UDim2.new(0, 600, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local title = Instance.new("Frame", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundColor3 = Color3.fromRGB(10,10,10)
+
+local titleText = Instance.new("TextLabel", title)
+titleText.Size = UDim2.new(0,200,1,0)
+titleText.Position = UDim2.new(0.5,-100,0,0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "PolloLockV2"
+titleText.TextColor3 = Color3.fromRGB(240,240,255)
+titleText.Font = Enum.Font.SourceSansBold
+titleText.TextSize = 22
+
+local minimize = Instance.new("TextButton", title)
+minimize.Size = UDim2.new(0, 35, 1, 0)
+minimize.Position = UDim2.new(1, -70, 0, 0)
+minimize.Text = "_"
+minimize.BackgroundColor3 = Color3.fromRGB(40,40,40)
+minimize.TextColor3 = Color3.fromRGB(255,255,255)
+
+local close = Instance.new("TextButton", title)
+close.Size = UDim2.new(0, 35, 1, 0)
+close.Position = UDim2.new(1, -35, 0, 0)
+close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(40,40,40)
+close.TextColor3 = Color3.fromRGB(255,255,255)
+
+local sidebar = Instance.new("Frame", mainFrame)
+sidebar.Size = UDim2.new(0, 100, 1, -35)
+sidebar.Position = UDim2.new(0, 0, 0, 35)
+sidebar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+local sidebarLayout = Instance.new("UIListLayout", sidebar)
+sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+sidebarLayout.Padding = UDim.new(0, 5)
+
+local container = Instance.new("Frame", mainFrame)
+container.Size = UDim2.new(1, -100, 1, -35)
+container.Position = UDim2.new(0, 100, 0, 35)
+container.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+local pages = {}
+local function switchPage(pageName)
+    for name, page in pairs(pages) do
+        page.Visible = (name == pageName)
+    end
+end
+
+local function createPage(name)
+    local page = Instance.new("ScrollingFrame", container)
+    page.Size = UDim2.new(1,0,1,0)
+    page.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    page.Visible = false
+    page.CanvasSize = UDim2.new(0,0,0,0)
+    page.ScrollBarThickness = 6
+
+    local layout = Instance.new("UIGridLayout", page)
+    layout.CellSize = UDim2.new(0.5,-15,0,50)
+    layout.CellPadding = UDim2.new(0,10,0,10)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+20)
+    end)
+
+    pages[name] = page
+    return page
+end
+
+local function addSidebarButton(text, pageName)
+    local btn = Instance.new("TextButton", sidebar)
+    btn.Size = UDim2.new(1,-10,0,35)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 15
+    btn.MouseButton1Click:Connect(function()
+        switchPage(pageName)
+    end)
+end
+
+local mainPage = createPage("Main")
+local miscPage = createPage("Misc")
+local configPage = createPage("Config")
+local extrasPage = createPage("Extras")
+
+addSidebarButton("Main","Main")
+addSidebarButton("Misc","Misc")
+addSidebarButton("Config","Config")
+addSidebarButton("Extras","Extras")
+
+local camera = workspace.CurrentCamera
+local aimlockEnabled = false
+local fovSize = 100
+local colorPresets = {
+    {name="Rainbow", func=function() local t=tick()*2 return Color3.fromHSV((t%5)/5,1,1) end},
+    {name="Cyan",    func=function() return Color3.fromRGB(0,255,255) end},
+    {name="Pink",    func=function() return Color3.fromRGB(255,0,120) end},
+    {name="Green",   func=function() return Color3.fromRGB(0,255,0) end},
+    {name="Orange",  func=function() return Color3.fromRGB(255,140,0) end},
+    {name="White",   func=function() return Color3.fromRGB(255,255,255) end},
+    {name="Blue",    func=function() return Color3.fromRGB(80,140,255) end},
+    {name="Yellow",  func=function() return Color3.fromRGB(255,255,0) end},
+    {name="Dark",    func=function() return Color3.fromRGB(20,20,20) end}
+}
+local colorPresetIndex = 1
+local function getCurrentColor() return colorPresets[colorPresetIndex].func() end
+
+local fovScreenGui = Instance.new("ScreenGui")
+fovScreenGui.Name = "FOVOverlay"
+fovScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+fovScreenGui.IgnoreGuiInset = true
+fovScreenGui.DisplayOrder = 1000
+fovScreenGui.ResetOnSpawn = false
+
+local fovCircle = Instance.new("Frame", fovScreenGui)
+fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+fovCircle.Size = UDim2.new(0, fovSize*2, 0, fovSize*2)
+fovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
+fovCircle.BackgroundTransparency = 0.7
+fovCircle.BorderSizePixel = 0
+fovCircle.Visible = false
+fovCircle.Name = "FOVCircle"
+local uiStroke = Instance.new("UIStroke", fovCircle)
+uiStroke.Thickness = 3
+uiStroke.Transparency = 0.1
+uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+local uicorner = Instance.new("UICorner", fovCircle)
+uicorner.CornerRadius = UDim.new(1, 0)
+
+local espEnabled = false
+local espFolder = Instance.new("Folder", fovScreenGui)
+espFolder.Name = "PolloLockESP"
+
+local buttonStyle = {
+    Size = UDim2.new(0, 90, 0, 32),
+    BackgroundColor3 = Color3.fromRGB(50,50,50),
+    TextColor3 = Color3.fromRGB(255,255,255),
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 15,
+}
+
+local spacing = 10
+local baseY = 10
+
+local fovSizeLabel = Instance.new("TextLabel", mainPage)
+fovSizeLabel.Size = UDim2.new(0, 100, 0, 32)
+fovSizeLabel.Position = UDim2.new(0, spacing*6+buttonStyle.Size.X.Offset*5, 0, baseY)
+fovSizeLabel.BackgroundColor3 = Color3.fromRGB(25,25,25)
+fovSizeLabel.Text = "FOV Size: " .. tostring(fovSize)
+fovSizeLabel.TextColor3 = Color3.fromRGB(0,255,255)
+fovSizeLabel.Font = Enum.Font.GothamSemibold
+fovSizeLabel.TextSize = 15
+fovSizeLabel.BackgroundTransparency = 0.4
+
+local aimlockBtn = Instance.new("TextButton", mainPage)
+for k, v in pairs(buttonStyle) do aimlockBtn[k] = v end
+aimlockBtn.Text = "Aimlock"
+aimlockBtn.Position = UDim2.new(0, spacing, 0, baseY)
+aimlockBtn.MouseButton1Click:Connect(function()
+    fovCircle.Visible = not fovCircle.Visible
+    aimlockEnabled = fovCircle.Visible
+    aimlockBtn.BackgroundColor3 = fovCircle.Visible and Color3.fromRGB(0,255,120) or buttonStyle.BackgroundColor3
+end)
+
+local espBtn = Instance.new("TextButton", mainPage)
+for k, v in pairs(buttonStyle) do espBtn[k] = v end
+espBtn.Text = "ESP"
+espBtn.Position = UDim2.new(0, spacing*2+buttonStyle.Size.X.Offset, 0, baseY)
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+    espBtn.BackgroundColor3 = espEnabled and Color3.fromRGB(0,255,120) or buttonStyle.BackgroundColor3
+end)
+
+local colorBtn = Instance.new("TextButton", mainPage)
+for k, v in pairs(buttonStyle) do colorBtn[k] = v end
+colorBtn.Text = "Color"
+colorBtn.Position = UDim2.new(0, spacing*3+buttonStyle.Size.X.Offset*2, 0, baseY)
+colorBtn.MouseButton1Click:Connect(function()
+    colorPresetIndex = colorPresetIndex % #colorPresets + 1
+    colorBtn.Text = "Color: "..colorPresets[colorPresetIndex].name
+end)
+
+local fovMinusBtn = Instance.new("TextButton", mainPage)
+for k, v in pairs(buttonStyle) do fovMinusBtn[k] = v end
+fovMinusBtn.Text = "-"
+fovMinusBtn.Position = UDim2.new(0, spacing*4+buttonStyle.Size.X.Offset*3, 0, baseY)
+fovMinusBtn.MouseButton1Click:Connect(function()
+    fovSize = math.max(20, fovSize - 10)
+    fovCircle.Size = UDim2.new(0, fovSize*2, 0, fovSize*2)
+    fovSizeLabel.Text = "FOV Size: " .. tostring(fovSize)
+end)
+
+local fovPlusBtn = Instance.new("TextButton", mainPage)
+for k, v in pairs(buttonStyle) do fovPlusBtn[k] = v end
+fovPlusBtn.Text = "+"
+fovPlusBtn.Position = UDim2.new(0, spacing*5+buttonStyle.Size.X.Offset*4, 0, baseY)
+fovPlusBtn.MouseButton1Click:Connect(function()
+    fovSize = math.min(500, fovSize + 10)
+    fovCircle.Size = UDim2.new(0, fovSize*2, 0, fovSize*2)
+    fovSizeLabel.Text = "FOV Size: " .. tostring(fovSize)
+end)
+
+-- WALL CHECK SAFE (corrigido)
+local function isVisible(origin, targetPos, targetChar)
+    if not origin or not targetPos then return true end
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    rayParams.IgnoreWater = true
+    local direction = (targetPos - origin)
+    if direction.Magnitude == 0 then return true end
+    local result = workspace:Raycast(origin, direction, rayParams)
+    if result and targetChar and result.Instance:IsDescendantOf(targetChar) then
+        return true
+    end
+    return not result
+end
+
+local function getCurrentTarget()
+    local closest, shortest = nil, math.huge
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+            local head = plr.Character.Head
+            local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local center = Vector2.new(
+                    fovCircle.AbsolutePosition.X + fovCircle.AbsoluteSize.X/2,
+                    fovCircle.AbsolutePosition.Y + fovCircle.AbsoluteSize.Y/2
+                )
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                if dist <= fovSize and dist < shortest then
+                    local myChar = LocalPlayer.Character
+                    local myHead = myChar and myChar:FindFirstChild("Head")
+                    if myHead and isVisible(myHead.Position, head.Position, plr.Character) then
+                        shortest = dist
+                        closest = plr
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function aimAt(target)
+    if not target or not target.Character or not target.Character:FindFirstChild("Head") then return end
+    local head = target.Character.Head
+    camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+end
+
+RunService.RenderStepped:Connect(function()
+    if fovCircle.Visible then
+        local c = getCurrentColor()
+        fovCircle.BackgroundColor3 = c
+        uiStroke.Color = c
+        uiStroke.Thickness = 3 + math.sin(tick()*4)*2
+    end
+    if aimlockEnabled and fovCircle.Visible then
+        local target = getCurrentTarget()
+        if target then aimAt(target) end
+    end
+    if espEnabled then
+        for _,v in ipairs(espFolder:GetChildren()) do v:Destroy() end
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+                local head = plr.Character.Head
+                local headScreen, onScreen = camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local nameLbl = Instance.new("TextLabel", espFolder)
+                    nameLbl.Size = UDim2.new(0, 100, 0, 18)
+                    nameLbl.Position = UDim2.new(0, headScreen.X - 50, 0, headScreen.Y - 30)
+                    nameLbl.BackgroundTransparency = 1
+                    nameLbl.Text = plr.Name
+                    nameLbl.TextColor3 = getCurrentColor()
+                    nameLbl.Font = Enum.Font.Gotham
+                    nameLbl.TextSize = 14
+                    nameLbl.TextStrokeTransparency = 0.2
+                    nameLbl.ZIndex = 99
+
+                    local tracerLine = Instance.new("Frame", espFolder)
+                    tracerLine.BackgroundColor3 = getCurrentColor()
+                    tracerLine.BorderSizePixel = 0
+                    tracerLine.AnchorPoint = Vector2.new(0, 0.5)
+                    local viewportSize = camera.ViewportSize
+                    local from = Vector2.new(viewportSize.X/2, viewportSize.Y/2)
+                    local to = Vector2.new(headScreen.X, headScreen.Y)
+                    local distance = (to - from).Magnitude
+                    tracerLine.Size = UDim2.new(0, 2, 0, distance)
+                    tracerLine.Position = UDim2.new(0, from.X, 0, from.Y)
+                    tracerLine.BackgroundTransparency = 0.2
+                    tracerLine.ZIndex = 98
+                    local angle = math.atan2(to.Y - from.Y, to.X - from.X)
+                    tracerLine.Rotation = math.deg(angle) - 90
+                end
+            end
+        end
+    else
+        for _,v in ipairs(espFolder:GetChildren()) do v:Destroy() end
+    end
+end)
+
+local function addButton(page, text, callback)
+    local btn = Instance.new("TextButton", page)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Size = UDim2.new(0,200,0,40)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 15
+    btn.MouseButton1Click:Connect(callback)
+end
+
+addButton(miscPage, "Add +10 Speed", function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = hum.WalkSpeed + 10 end
+end)
+
+addButton(miscPage, "Add +10 JumpPower", function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.JumpPower = hum.JumpPower + 10 end
+end)
+
+addButton(miscPage, "Infinite Jump", function()
+    UIS.JumpRequest:Connect(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end
+    end)
+end)
+
+local flying = false
+local flyConnection
+addButton(miscPage, "Toggle Fly", function()
+    flying = not flying
+    if flying then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.PlatformStand = true end
+        flyConnection = RunService.RenderStepped:Connect(function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local moveDir = Vector3.new()
+                if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + workspace.CurrentCamera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - workspace.CurrentCamera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - workspace.CurrentCamera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + workspace.CurrentCamera.CFrame.RightVector end
+                if UIS.TouchEnabled and UIS:GetFocusedTextBox() == nil then
+                    moveDir = workspace.CurrentCamera.CFrame.LookVector
+                end
+                root.Velocity = moveDir * 60
+            end
+        end)
+    else
+        if flyConnection then flyConnection:Disconnect() end
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.PlatformStand = false end
+    end
+end)
+
+local noclip = false
+local noclipConnection
+addButton(miscPage, "Toggle Noclip", function()
+    noclip = not noclip
+    if noclipConnection then noclipConnection:Disconnect() end
+    if noclip then
+        noclipConnection = RunService.Stepped:Connect(function()
+            if noclip and LocalPlayer.Character then
+                for _,v in pairs(LocalPlayer.Character:GetChildren()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
+                end
+            end
+        end)
+    end
+end)
+
+addButton(miscPage, "ServerHop", function()
+    TeleportService:Teleport(game.PlaceId)
+end)
+
+addButton(miscPage, "Rejoin", function()
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
+
+addButton(extrasPage, "Feyk Aim", function()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Universal-Aimbot-Keyless-43361"))()
+end)
+
+addButton(extrasPage, "Universal Silent", function()
+    loadstring(game:HttpGet("https://gist.githubusercontent.com/quantumloader/f18a1f10b4559f875c7dd07b094b1fc8/raw/398858fb42237abe47b2bb1e63ba4760205a822f/gistfile1.txt"))()
+end)
+
+addButton(extrasPage, "SilverWare", function()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-SilverWare-36477"))()
+end)
+
+addButton(extrasPage, "OldPollo", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/breckzk/PolloLock/refs/heads/main/Aim"))()
+end)
+
+local allUI = {mainFrame, title, sidebar, container}
+local function tweenColor(obj, prop, color)
+    TweenService:Create(obj, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {[prop]=color}):Play()
+end
+
+local function recolorAll(bg, accent)
+    for _,obj in ipairs(allUI) do
+        tweenColor(obj, "BackgroundColor3", bg)
+    end
+    for _,page in pairs(pages) do
+        tweenColor(page, "BackgroundColor3", accent)
+    end
+    for _,btn in ipairs(sidebar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            tweenColor(btn, "BackgroundColor3", accent)
+        end
+    end
+end
+
+local themes = {
+    ["Dark"] = {bg = Color3.fromRGB(25,25,25), accent = Color3.fromRGB(40,40,40)},
+    ["Blue"] = {bg = Color3.fromRGB(0,0,40), accent = Color3.fromRGB(0,0,255)},
+    ["Red"] = {bg = Color3.fromRGB(40,0,0), accent = Color3.fromRGB(255,0,0)},
+    ["Pink"] = {bg = Color3.fromRGB(40,0,40), accent = Color3.fromRGB(255,0,255)},
+    ["Green"] = {bg = Color3.fromRGB(0,40,0), accent = Color3.fromRGB(0,255,0)},
+    ["Purple"] = {bg = Color3.fromRGB(25,0,40), accent = Color3.fromRGB(170,0,255)},
+    ["Yellow"] = {bg = Color3.fromRGB(40,40,0), accent = Color3.fromRGB(255,255,0)},
+    ["Gray"] = {bg = Color3.fromRGB(40,40,40), accent = Color3.fromRGB(200,200,200)},
+    ["Aqua"] = {bg = Color3.fromRGB(0,40,40), accent = Color3.fromRGB(0,255,255)},
+    ["Rainbow"] = "rainbow"
+}
+
+local rainbowConnection
+
+for themeName, colors in pairs(themes) do
+    local btn = Instance.new("TextButton", configPage)
+    btn.Size = UDim2.new(0,200,0,40)
+    btn.Text = "Theme: "..themeName
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 15
+
+    btn.MouseButton1Click:Connect(function()
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+            rainbowConnection = nil
+        end
+        if colors == "rainbow" then
+            rainbowConnection = RunService.RenderStepped:Connect(function()
+                local t = tick()
+                local r = math.sin(t)*127+128
+                local g = math.sin(t+2)*127+128
+                local b = math.sin(t+4)*127+128
+                local rainbowColor = Color3.fromRGB(r,g,b)
+                recolorAll(rainbowColor, rainbowColor)
+                titleText.TextColor3 = Color3.fromRGB(240,240,255)
+            end)
+        else
+            recolorAll(colors.bg, colors.accent)
+            titleText.TextColor3 = Color3.fromRGB(240,240,255)
+        end
+    end)
+end
+
+switchPage("Main")
+local minimized = false
+minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    container.Visible = not minimized
+    sidebar.Visible = not minimized
+end)
+close.MouseButton1C
